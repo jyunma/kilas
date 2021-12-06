@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.intern.kilas.dao.MainDAO">
+
+<!-- admin_id로 admin 객체 찾기 -->
+	<select id = "selectAdmin" resultType="AdminVO"  parameterType="String">
+		SELECT * FROM admin WHERE admin_ID  = #{admin_id}
+	</select>
+
+<!-- book_id로 book 객체 찾기 -->
+	<select id = "selectBook" resultType="BookVO"  parameterType="String">
+		SELECT * FROM book WHERE book_ID  = #{book_id}
+	</select>
+	
+<!-- user_id로 user 객체 찾기 -->
+	<select id = "selectUser" resultType="UserVO"  parameterType="String">
+		SELECT * FROM user WHERE user_ID  = #{user_id}
+	</select>
+	
+<!-- 유저 대출 목록(기록x. 현재 대출 중인 목록 목록) -->
+	<select id = "selectRecordByUser" resultType="RecordNowVO"  parameterType="String">
+		SELECT b.book_id, b.BOOK_TITLE, b.BOOK_CALLNUM, rcd.RECORD_BORROWDATE, rcd.RECORD_DUEDATE, b.BOOK_BORROW, rcd.RECORD_BORROWBY
+		FROM (SELECT *
+		FROM record
+		WHERE user_id = #{user_id}
+		AND record_returndate IS NULL) AS rcd
+		LEFT JOIN book AS b
+		ON rcd.book_id = b.book_id
+		ORDER BY rcd.record_returndate desc
+	</select>
+
+<!-- 이용자 대출 기록 -->
+	<select id = "selectHistoryByUser" resultType="RecordVO" parameterType="String">
+		select * from record where user_id = #{user_id} ORDER BY record_returndate desc
+	</select>
+
+<!-- book_id로 현재 대출 중인 user 찾기 -->
+	<select id = "selectRecordByBook" resultType="RecordVO"  parameterType="String">
+		SELECT * FROM record WHERE book_ID  = #{book_id} and record_returndate is null
+	</select>
+	
+	<!-- 대출 처리 -->
+<!-- 대출기록 추가 -->
+	<insert id="insertRecord" parameterType="RecordVO">
+		INSERT INTO RECORD(USER_ID, BOOK_ID, RECORD_BORROWDATE, RECORD_DUEDATE, RECORD_BORROWBY)
+		VALUES(#{user_id}, #{book_id}, #{record_borrowdate}, #{record_duedate}, #{record_borrowby}) 
+	</insert>
+	
+<!-- 도서 상태를 대출중으로 변경 -->
+	<update id="updateBorrow" parameterType="String">
+		update book set book_borrow = 1 where book_id = #{book_id}
+	</update>
+	
+	<!-- 반납처리 -->
+<!-- 반납일, 반납처리자 추가 -->
+	<update id="updateRecord" parameterType="RecordVO">
+		update record set record_returndate = #{record_returndate}, record_returnby = #{record_returnby} where book_ID  = #{book_id} and record_returndate is null
+	</update>
+
+<!-- 도서 상태를 비치중으로 변경 -->
+	<update id="updateReturn" parameterType="String">
+		update book set book_borrow = 0 where book_id = #{book_id}
+	</update>
+
+<!-- 등록 -->
+<!-- 관리자 등록 -->
+	<insert id="insertAdmin" parameterType="AdminVO">
+		insert into admin(admin_id, admin_pass, admin_name, admin_role)
+		values(#{admin_id}, #{admin_pass}, #{admin_name}, #{admin_role})
+	</insert>
+<!-- 도서 등록 -->
+	<insert id="insertBook" parameterType="BookVO">
+		insert into book(book_id, book_title, book_author, book_publisher, book_year, book_callnum, book_borrow)
+		values(#{book_id}, #{book_title}, #{book_author}, #{book_publisher}, #{book_year}, #{book_callnum}, 0)
+	</insert>
+<!-- 이용자 등록 -->
+	<insert id="insertUser" parameterType="UserVO">
+		insert into user(user_id,user_name,user_phone,user_address)
+		values(#{user_id}, #{user_name}, #{user_phone}, #{user_address})
+	</insert>
+
+<!-- 수정 -->	
+<!-- 관리자 수정 -->
+	<update id="updateAdmin" parameterType="AdminVO">
+		update admin set admin_name = #{admin_name}, admin_pass = #{admin_pass}
+		where admin_id = #{admin_id}
+	</update>
+	
+<!-- 도서 수정 -->
+	<update id="updateBook" parameterType="BookVO">
+		update book set book_title=#{book_title}, book_author=#{book_author}, book_publisher=#{book_publisher}, book_year=#{book_year}, book_callnum=#{book_callnum}
+		where book_id = #{book_id}
+	</update>
+	
+<!-- 이용자 수정 -->	
+	<update id="updateUser" parameterType="UserVO">
+		update user set user_name=#{user_name}, user_phone=#{user_phone}, user_address=#{user_address} 
+		where user_id = #{user_id}
+	</update>
+
+<!-- 검색 -->
+<!-- 도서 검색 -->
+<!-- 등록번호 -->
+	<select id="searchBookById" resultType="BookVO" parameterType="String">
+		select * from book where book_id like #{keyword}
+	</select>
+<!-- 도서명 -->
+	<select id="searchBookBytitle" resultType="BookVO" parameterType="String">
+		select * from book where book_title like #{keyword}
+	</select>
+<!-- 저자 -->
+	<select id="searchBookByAuthor" resultType="BookVO" parameterType="String">
+		select * from book where book_author like #{keyword}
+	</select>
+<!-- 출판사 -->
+	<select id="searchBookByPublisher" resultType="BookVO" parameterType="String">
+		select * from book where book_publisher like #{keyword}
+	</select>
+<!-- 이용자 검색 -->
+<!-- 이름 -->
+	<select id="searchUserByName" resultType="UserVO" parameterType="String">
+		select * from user where user_name like #{keyword}
+	</select>
+<!-- 연락처 -->
+	<select id="searchUserByPhone" resultType="UserVO" parameterType="String">
+		select * from user where user_phone like #{keyword}
+	</select>
+<!-- 주소 -->
+	<select id="searchUserByAddress" resultType="UserVO" parameterType="String">
+		select * from user where user_address like #{keyword}
+	</select>
+
+
+</mapper>
